@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
+import timeit
 
 
 def back_substitution(A, b, lower=False):
@@ -34,14 +35,15 @@ def gauss_elimination(A, b):
 
 def lu_decomposition(A):
     n = len(A)
-    L = np.identity(n)
-    U = A.copy()
     for k in range(n-1):
-        for j in range(k+1, n):
-            L[j, k] = U[j, k] / U[k, k]
-            U[j, k:] -= L[j, k] * U[k, k:]
-            for i in range(n):
-                n = len(A)
+        for i in range(k+1, n):
+            A[i,k] = A[i,k]/A[k,k]
+            for j in range(k+1, n):
+                A[i, j] -= A[i, k] * A[k, j]
+                #print(A)
+    L = np.tril(A, k=-1) + np.identity(n)
+    U = np.triu(A)
+
     return L, U
 
 
@@ -53,26 +55,31 @@ def solve_lu(L, U, b):
     return x
 
 
+def time_function(z, method, n):
+    A = np.random.uniform(low=0.5, high=10, size=(n, n))
+    if method == "Gauss":
+        for i in range(z):
+            b = np.random.uniform(low=0.5, high=20, size=n)
+            gauss_elimination(A, b)
+    else:
+        L, U = lu_decomposition(A)
+        for i in range(z):
+            b = np.random.uniform(low=0.5, high=10, size=n)
+            solve_lu(L, U, b)
+
+
+
+
 def main():
     data = []
-    #df = pd.DataFrame(columns=columns, index=)
+    testable = ["Gauss", "LU"]
     for z in tqdm(range(1, 6)):
-        for n in range(3, 200, 10):
-            A = np.random.uniform(low=0.5, high=20, size=(n, n))
-            start_time = time.time()
-            L, U = lu_decomposition(A)
-            for i in range(1, z):
-                b = np.random.uniform(low=0.5, high=20, size=n)
-                solve_lu(L, U, b)
-            total_time = time.time() - start_time
-            data.append([z, n, total_time, "LU"])
-
-            start_time = time.time()
-            for i in range(1, z):
-                b = np.random.uniform(low=0.5, high=20, size=n)
-                gauss_elimination(A, b)
-            total_time = time.time() - start_time
-            data.append([z, n, total_time, "Gauss"])
+        for n in range(3, 300, 30):
+            for function in testable:
+                starttime = timeit.default_timer()
+                time_function(z, function, n)
+                total_time = timeit.default_timer() - starttime
+                data.append([z, n, total_time, function])
 
     columns = ["b", "N", "Time", "Method"]
     df = pd.DataFrame(columns=columns, data=data)
@@ -82,6 +89,10 @@ def main():
         lu_df = data[(data.Method == "LU")]
         plt.plot(lu_df.N, lu_df.Time, 'b-')
         plt.plot(gauss_df.N, gauss_df.Time, 'r-')
+        plt.suptitle(f"Time to solve {i} equations")
+        plt.xlabel("Matrix size NxN:")
+        plt.ylabel("Time taken:")
+        plt.savefig(fname=f"time_to_solve_{i}")
         plt.show()
     print(df.head)
     #plt.plot(matrix_sizes, gauss_times, 'b-')
