@@ -1,5 +1,4 @@
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
@@ -22,7 +21,6 @@ def back_substitution(A, b, lower=False):
 
 def gauss_elimination(A, b):
     n = len(A)
-    x = np.zeros(n)
     for k in range(n):
         for i in range(k+1, n):
             r = A[i, k] / A[k, k]
@@ -40,14 +38,14 @@ def lu_decomposition(A):
             A[i,k] = A[i,k]/A[k,k]
             for j in range(k+1, n):
                 A[i, j] -= A[i, k] * A[k, j]
-                #print(A)
     L = np.tril(A, k=-1) + np.identity(n)
     U = np.triu(A)
 
     return L, U
 
 
-def solve_lu(L, U, b):
+def solve_lu(A, b):
+    L, U = lu_decomposition(A.copy())
     Lstar = np.flip(L)
     bstar = np.flip(b)
     z = back_substitution(Lstar, bstar, lower=True)
@@ -68,6 +66,18 @@ def time_function(z, method, n):
             solve_lu(L, U, b)
 
 
+def plot_data(df):
+    for i in range(1, 6):
+        data = df[(df.b == i)]
+        gauss_df = data[(data.Method == "Gauss")]
+        lu_df = data[(data.Method == "LU")]
+        plt.plot(lu_df.N, lu_df.Time, 'b-')
+        plt.plot(gauss_df.N, gauss_df.Time, 'r-')
+        plt.suptitle(f"Time to solve {i} equations")
+        plt.xlabel("Matrix size NxN:")
+        plt.ylabel("Time taken:")
+        plt.savefig(fname=f"time_to_solve_{i}")
+        plt.show()
 
 
 def main():
@@ -83,25 +93,7 @@ def main():
 
     columns = ["b", "N", "Time", "Method"]
     df = pd.DataFrame(columns=columns, data=data)
-    for i in range(1, 6):
-        data = df[(df.b == i)]
-        gauss_df = data[(data.Method == "Gauss")]
-        lu_df = data[(data.Method == "LU")]
-        plt.plot(lu_df.N, lu_df.Time, 'b-')
-        plt.plot(gauss_df.N, gauss_df.Time, 'r-')
-        plt.suptitle(f"Time to solve {i} equations")
-        plt.xlabel("Matrix size NxN:")
-        plt.ylabel("Time taken:")
-        plt.savefig(fname=f"time_to_solve_{i}")
-        plt.show()
-    print(df.head)
-    #plt.plot(matrix_sizes, gauss_times, 'b-')
-    #plt.ylabel("Time: ")
-    #plt.xlabel("Matrix size: ")
-    #plt.show()
-
-
-    #print(f"time taken for {n}x{n} matrix: {time} seconds")
+    plot_data(df)
 
 
 if __name__ == "__main__":
