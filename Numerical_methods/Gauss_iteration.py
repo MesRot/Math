@@ -6,6 +6,14 @@ import timeit
 
 
 def back_substitution(A, b, lower=False):
+    '''
+    Ratkaistaan yhtälöryhmä kolmio matriisista
+    :param A: Matriisi
+    :param b: b-vektori
+    :param lower: Alustavasti funktio toimii vain alakolmioille, mutta asettamalla parametrin True niin funktio toimii
+    yläkolmio matriisille
+    :return: Palauttaa ratkaistun x-vektorin
+    '''
     n = len(A)
     x = np.zeros_like(b)
     if A[n - 1, n - 1] == 0:
@@ -20,6 +28,12 @@ def back_substitution(A, b, lower=False):
 
 
 def gauss_elimination(A, b):
+    '''
+    Gaussin eliminaatio, jossa lopussa kutsutaan funktiota, joka ratkaisee saadun kolmiomatriisin
+    :param A: Matriisi
+    :param b: B-vektori
+    :return: Palauttaa ratkaistun x-vektorin
+    '''
     n = len(A)
     for k in range(n):
         for i in range(k+1, n):
@@ -32,10 +46,15 @@ def gauss_elimination(A, b):
 
 
 def lu_decomposition(A):
+    '''
+    Hajoittaaa matriisin ala- ja yläkolmiomatriisiin
+    :param A: Matriisi
+    :return: Palauttaa ala- ja yläkolmiomatriisin
+    '''
     n = len(A)
     for k in range(n-1):
         for i in range(k+1, n):
-            A[i,k] = A[i,k]/A[k,k]
+            A[i, k] = A[i, k]/A[k, k]
             for j in range(k+1, n):
                 A[i, j] -= A[i, k] * A[k, j]
     L = np.tril(A, k=-1) + np.identity(n)
@@ -44,8 +63,14 @@ def lu_decomposition(A):
     return L, U
 
 
-def solve_lu(A, b):
-    L, U = lu_decomposition(A.copy())
+def solve_lu(L, U, b):
+    '''
+    Funktio, joka ratkaisee x-vektorin ala- ja yläkolmiomatriisista.
+    :param L: Yläkolmiomatriisi
+    :param U: Alakolmiomatriisi
+    :param b: b-vektori
+    :return: palauttaa x-vektorin
+    '''
     Lstar = np.flip(L)
     bstar = np.flip(b)
     z = back_substitution(Lstar, bstar, lower=True)
@@ -54,6 +79,13 @@ def solve_lu(A, b):
 
 
 def time_function(z, method, n):
+    '''
+    Apufunktio aikatestaukseen. Ei palauta mitään, mutta testataan kauanko funktion suoritus kestää
+    :param z: Kuinka monta eri b-vektoria ratkaistaan
+    :param method: Kumpi metodi
+    :param n: Matriisin koko
+    :return: None
+    '''
     A = np.random.uniform(low=0.5, high=10, size=(n, n))
     if method == "Gauss":
         for i in range(z):
@@ -67,6 +99,11 @@ def time_function(z, method, n):
 
 
 def plot_data(df):
+    '''
+    Apufunktio data piirtämiseen. Kuvaajan tallentava rivi kommentoitu pois
+    :param df: Data panda-dataframe formaatissa.
+    :return:
+    '''
     for i in range(1, 6):
         data = df[(df.b == i)]
         gauss_df = data[(data.Method == "Gauss")]
@@ -76,15 +113,19 @@ def plot_data(df):
         plt.suptitle(f"Time to solve {i} equations")
         plt.xlabel("Matrix size NxN:")
         plt.ylabel("Time taken:")
-        plt.savefig(fname=f"time_to_solve_{i}")
+        #plt.savefig(fname=f"time_to_solve_{i}")
         plt.show()
 
 
 def main():
+    '''
+    Pääfunktio, jossa määritettään parametrit ja luodaan dataframe ja kutsutaan plot funktiota
+    :return:
+    '''
     data = []
     testable = ["Gauss", "LU"]
     for z in tqdm(range(1, 6)):
-        for n in range(3, 300, 30):
+        for n in range(3, 150, 30):
             for function in testable:
                 starttime = timeit.default_timer()
                 time_function(z, function, n)
