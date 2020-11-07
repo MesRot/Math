@@ -1,8 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import pandas as pd
-import timeit
+import matplotlib.pyplot as plt #  Kuvaajien piirtämiseen
+from tqdm import tqdm #  Loading bar kirjastolle
+import pandas as pd #  Datan käsittely kirjasto
+import timeit #  Tarkempi ajastuskirjasto unixille, kuin time
 
 
 def back_substitution(A, b, lower=False):
